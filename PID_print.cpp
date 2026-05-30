@@ -11,6 +11,7 @@ void PIDPrint::input_coefficient(float coefficient_) {
 }
 void PIDPrint::input_target(float target_) {
 	pid.input_target(_wrap_angle(target_));
+	target = target_;
 }
 void PIDPrint::input_K(float Kp_, float Ki_, float Kd_) {
 	pid.input_Kp(Kp_);
@@ -26,6 +27,13 @@ void PIDPrint::input_delta_t(float delta_t_) {
 		delta_t = delta_t_;
 	}
 }
+void PIDPrint::input_tolerance(float tolerance_) {
+	tolerance = tolerance_;
+}
+void PIDPrint::input_stable_required(float stable_required_) {
+	stable_required = stable_required_;
+}
+
 void PIDPrint::decide_sum(float current, int num) {
 	sum.resize(current_count);
 	angle.resize(current_count + 1);
@@ -45,8 +53,23 @@ void PIDPrint::decide_count() {
 }
 void PIDPrint::print() {
 	int max_count = return_max_count();
+	int tolerance_count = 0;
 	for (int i = 0; i < current_count; i++) {
 		std::cout << "現在角:" << _wrap_angle(angle[i + 1]) << "カウント数" << i << std::endl;
+
+		if (fabs(target - angle[i + 1]) < tolerance) {
+			tolerance_count++;
+			std::cout << "許容誤差内(未:安定)" << std::endl;
+		}
+		else {
+			tolerance_count = 0;
+		}
+		if (tolerance_count >= stable_required) {
+			std::cout << "安定" << std::endl;
+			std::cout << std::endl;
+			std::cout << std::endl;
+			std::cout << std::endl;
+		}
 
 		for (int i2 = max_count; i2 > 0; i2--) {
 			if (count[i] < 0 && abs(count[i]) >= i2) {
