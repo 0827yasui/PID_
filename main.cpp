@@ -81,6 +81,7 @@ int main(void)
 	uint16_t precnt = 0;
 	uint16_t cnt = 0;
 	uint16_t dcnt;
+	int16_t signed_dcnt;
 
 	float current_ = 0.0f;
 	float duty = 0.0f;
@@ -110,7 +111,7 @@ int main(void)
 	MX_TIM3_Init();
 	/* USER CODE BEGIN 2 */
 	_Encoder encoder;
-	PID pid(0.3f, 0.000f, 0.0f, 100.0f);
+	PID pid(0.3f, 0.000f, 0.00f, 90.0f);
 
 	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
 	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
@@ -131,22 +132,23 @@ int main(void)
 		now = HAL_GetTick();
 
 		// エンコーダ処理
-		precnt = cnt;
 		cnt = __HAL_TIM_GET_COUNTER(&htim3);
 		dcnt = (uint16_t)(cnt - precnt);
+		signed_dcnt = (int16_t)dcnt;
+		precnt = cnt;
 
-		encoder.input_angle(dcnt);
+		encoder.input_angle(signed_dcnt);
 		current_ += encoder.get_angle();
 
-		if (now - last > 10) {
+		if (now - last > 1) {
 			// PID処理
-			duty = pid.compute(current_, 10);
+			duty = pid.compute(current_, 1.0f);
 			if (duty < 0) {
-				dir = 0;
+				dir = 1;
 				duty *= -1;
 			}
 			else {
-				dir = 1;
+				dir = 0;
 				duty *= 1;
 			}
 
