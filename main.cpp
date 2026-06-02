@@ -78,9 +78,9 @@ int main(void)
 	uint32_t now;
 	uint32_t last;
 
-	uint32_t precnt = 0;
-	uint32_t cnt = 0;
-	uint32_t dcnt;
+	uint16_t precnt = 0;
+	uint16_t cnt = 0;
+	uint16_t dcnt;
 
 	float current_ = 0.0f;
 	float duty = 0.0f;
@@ -110,7 +110,7 @@ int main(void)
 	MX_TIM3_Init();
 	/* USER CODE BEGIN 2 */
 	_Encoder encoder;
-	PID pid(1.9f, 0.0008f, 0.03f, 100.0f);
+	PID pid(0.3f, 0.000f, 0.0f, 100.0f);
 
 	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
 	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 0);
@@ -133,8 +133,7 @@ int main(void)
 		// エンコーダ処理
 		precnt = cnt;
 		cnt = __HAL_TIM_GET_COUNTER(&htim3);
-		if (cnt > precnt) dcnt = cnt - precnt;
-		else if (cnt <= precnt) dcnt = __HAL_TIM_GET_AUTORELOAD(&htim3) - precnt + cnt;
+		dcnt = (uint16_t)(cnt - precnt);
 
 		encoder.input_angle(dcnt);
 		current_ += encoder.get_angle();
@@ -152,7 +151,7 @@ int main(void)
 			}
 
 			// Moterへ更新
-			if (duty >= 1)HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+			if (dir == 1)HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 			else HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 
 			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, __HAL_TIM_GET_AUTORELOAD(&htim2) * duty);
@@ -281,7 +280,7 @@ static void MX_TIM3_Init(void)
 	htim3.Instance = TIM3;
 	htim3.Init.Prescaler = 0;
 	htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim3.Init.Period = 10000;
+	htim3.Init.Period = 65535;
 	htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 	sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
